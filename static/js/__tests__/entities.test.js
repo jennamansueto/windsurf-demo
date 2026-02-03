@@ -1,11 +1,12 @@
-import { splitPlayerCell, handlePlayerSplit, updatePlayer } from '../entities.js';
+import { splitPlayerCell, handlePlayerSplit, updatePlayer, respawnAI } from '../entities.js';
 import { gameState, mouse } from '../gameState.js';
-import { MIN_SPLIT_SCORE, MAX_PLAYER_CELLS } from '../config.js';
+import { MIN_SPLIT_SCORE, MAX_PLAYER_CELLS, AI_STARTING_SCORE } from '../config.js';
 
 // Mock gameState and mouse
 jest.mock('../gameState.js', () => ({
   gameState: {
-    playerCells: []
+    playerCells: [],
+    aiPlayers: []
   },
   mouse: { x: 0, y: 0 }
 }));
@@ -110,5 +111,18 @@ describe('updatePlayer', () => {
     const largeCellSpeed = Math.abs(gameState.playerCells[0].velocityX);
 
     expect(smallCellSpeed).toBeGreaterThan(largeCellSpeed);  // Smaller cells move faster
+  });
+});
+
+describe('respawnAI', () => {
+  test('returns AI with correct starting properties', () => {
+    const ai = respawnAI();
+
+    expect(ai).toHaveProperty('x');
+    expect(ai).toHaveProperty('y');
+    expect(ai.score).toBe(AI_STARTING_SCORE);
+    expect(ai).toHaveProperty('color');
+    expect(ai).toHaveProperty('direction');
+    expect(ai).toHaveProperty('name');
   });
 });
