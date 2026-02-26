@@ -1,4 +1,7 @@
 // UI Controls
+import { DIFFICULTY_ENABLED } from './config.js';
+import { gameState } from './gameState.js';
+import { initEntities } from './entities.js';
 
 function loadDarkMode() {
     const isDarkMode = localStorage.getItem('darkMode') === 'true';
@@ -42,4 +45,17 @@ export function initUI() {
         document.documentElement.setAttribute('data-theme', isDarkMode ? 'dark' : '');
         saveDarkMode(isDarkMode);
     });
+
+    // Handle difficulty selector
+    const difficultyContainer = document.getElementById('difficulty-container');
+    const difficultySelect = document.getElementById('difficulty-select');
+
+    if (!DIFFICULTY_ENABLED) {
+        difficultyContainer.style.display = 'none';
+    } else {
+        difficultySelect.addEventListener('change', (e) => {
+            gameState.difficulty = e.target.value;
+            initEntities(); // Re-initialize AI with new difficulty settings
+        });
+    }
 }

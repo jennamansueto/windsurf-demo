@@ -19,6 +19,15 @@ export const MERGE_COOLDOWN = 10000;  // Time in ms before cells can merge
 export const MERGE_FORCE = 0.3;       // Strength of the merging force
 export const MERGE_START_FORCE = 0.1; // Initial attraction force (before merge cooldown)
 
+// Feature flag — set to false to disable difficulty UI and restore original behavior
+export const DIFFICULTY_ENABLED = true;
+
+// Difficulty presets
+export const DIFFICULTY = {
+  easy: { AI_COUNT: 5,  AI_STARTING_SCORE: 30, AI_DIRECTION_CHANGE_CHANCE: 0.05 },
+  hard: { AI_COUNT: 15, AI_STARTING_SCORE: 80, AI_DIRECTION_CHANGE_CHANCE: 0.01 },
+};
+
 export const COLORS = {
     PLAYER: '#008080',  // Teal color
     MINIMAP: {

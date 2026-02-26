@@ -14,7 +14,8 @@ export const gameState = {
         y: 0
     },
     food: [],
-    aiPlayers: []
+    aiPlayers: [],
+    difficulty: 'normal',
 };
 
 export const mouse = { x: 0, y: 0 };

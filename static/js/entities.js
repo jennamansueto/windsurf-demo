@@ -11,7 +11,9 @@ import {
     MERGE_COOLDOWN,
     MERGE_DISTANCE,
     MERGE_FORCE,
-    MERGE_START_FORCE
+    MERGE_START_FORCE,
+    DIFFICULTY_ENABLED,
+    DIFFICULTY
 } from './config.js';
 
 const AI_NAMES = [
@@ -245,8 +247,11 @@ export function handlePlayerSplit() {
 }
 
 export function updateAI() {
+    const preset = DIFFICULTY_ENABLED ? DIFFICULTY[gameState.difficulty] : null;
+    const directionChangeChance = preset ? preset.AI_DIRECTION_CHANGE_CHANCE : 0.02;
+
     gameState.aiPlayers.forEach(ai => {
-        if (Math.random() < 0.02) {
+        if (Math.random() < directionChangeChance) {
             ai.direction = Math.random() * Math.PI * 2;
         }
 
@@ -277,12 +282,16 @@ export function initEntities() {
     }
 
     // Initialize AI players
-    for (let i = 0; i < AI_COUNT; i++) {
+    const preset = DIFFICULTY_ENABLED ? DIFFICULTY[gameState.difficulty] : null;
+    const aiCount = preset ? preset.AI_COUNT : AI_COUNT;
+    const aiStartingScore = preset ? preset.AI_STARTING_SCORE : AI_STARTING_SCORE;
+
+    for (let i = 0; i < aiCount; i++) {
         const pos = getRandomPosition();
         const ai = {
             x: pos.x,
             y: pos.y,
-            score: AI_STARTING_SCORE,
+            score: aiStartingScore,
             color: `hsl(${Math.random() * 360}, 70%, 50%)`,
             direction: Math.random() * Math.PI * 2,
             name: getUnusedAIName()
