@@ -1,6 +1,6 @@
 import { gameState } from './gameState.js';
 import { getSize, calculateCenterOfMass } from './utils.js';
-import { WORLD_SIZE, COLORS, FOOD_SIZE } from './config.js';
+import { WORLD_SIZE, COLORS, FOOD_SIZE, NIGHT_MODE_ENABLED, NIGHT_MODE_CONFIG } from './config.js';
 
 let canvas, ctx, minimapCanvas, minimapCtx, scoreElement, leaderboardContent;
 
@@ -105,8 +105,54 @@ export function drawGame() {
         }
     });
 
+    // Draw night mode overlay if active
+    if (NIGHT_MODE_ENABLED && gameState.nightModeActive) {
+        drawNightOverlay();
+    }
+
     // Update score display
     scoreElement.textContent = `Score: ${Math.floor(gameState.playerCells.reduce((sum, cell) => sum + cell.score, 0))}`;
+}
+
+function drawNightOverlay() {
+    // Save current state
+    ctx.save();
+
+    // Create a temporary canvas for the overlay
+    ctx.globalCompositeOperation = 'source-over';
+
+    // Fill the entire canvas with the dark overlay
+    ctx.fillStyle = NIGHT_MODE_CONFIG.OVERLAY_COLOR;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Cut out circular areas around each player cell using destination-out
+    ctx.globalCompositeOperation = 'destination-out';
+
+    gameState.playerCells.forEach(cell => {
+        const screenX = cell.x - gameState.camera.x;
+        const screenY = cell.y - gameState.camera.y;
+        const cellSize = getSize(cell.score);
+
+        // Visibility radius scales with player size
+        const visibilityRadius = NIGHT_MODE_CONFIG.BASE_VISIBILITY_RADIUS +
+            cellSize * NIGHT_MODE_CONFIG.RADIUS_SCALE_FACTOR;
+
+        // Create radial gradient for smooth edge
+        const gradient = ctx.createRadialGradient(
+            screenX, screenY, visibilityRadius * NIGHT_MODE_CONFIG.GRADIENT_SPREAD,
+            screenX, screenY, visibilityRadius
+        );
+        gradient.addColorStop(0, 'rgba(0, 0, 0, 1)');
+        gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.arc(screenX, screenY, visibilityRadius, 0, Math.PI * 2);
+        ctx.fill();
+    });
+
+    // Restore composite operation
+    ctx.restore();
 }
 
 export function drawMinimap() {
