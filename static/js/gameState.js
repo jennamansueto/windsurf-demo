@@ -14,7 +14,15 @@ export const gameState = {
         y: 0
     },
     food: [],
-    aiPlayers: []
+    aiPlayers: [],
+    // Analytics mode runtime state
+    analytics: {
+        showSidebar: true,
+        aiConsumed: 0,
+        foodEaten: 0,
+        timeAliveStart: Date.now(),
+        scoreHistory: []   // Array of { time, score } for sparkline / tracking
+    }
 };
 
 export const mouse = { x: 0, y: 0 };

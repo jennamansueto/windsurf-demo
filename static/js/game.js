@@ -2,7 +2,8 @@ import { gameState, mouse } from './gameState.js';
 import { initRenderer, resizeCanvas, drawGame, drawMinimap, updateLeaderboard } from './renderer.js';
 import { updatePlayer, updateAI, initEntities, handlePlayerSplit } from './entities.js';
 import { handleFoodCollisions, handlePlayerAICollisions, handleAIAICollisions, respawnEntities } from './collisions.js';
-import { initUI } from './ui.js';
+import { initUI, updateAnalyticsSidebar } from './ui.js';
+import { ANALYTICS_MODE_ENABLED } from './config.js';
 
 function setupInputHandlers() {
     const canvas = document.getElementById('gameCanvas');
@@ -48,6 +49,9 @@ function verifyGameState() {
     }
 }
 
+let lastAnalyticsUpdate = 0;
+const ANALYTICS_UPDATE_INTERVAL = 500; // Update analytics every 500ms
+
 function gameLoop() {
     updatePlayer();
     updateAI();
@@ -55,6 +59,22 @@ function gameLoop() {
     updateLeaderboard();
     drawGame();
     drawMinimap();
+
+    // Update analytics sidebar at a throttled rate
+    if (ANALYTICS_MODE_ENABLED) {
+        const now = Date.now();
+        if (now - lastAnalyticsUpdate > ANALYTICS_UPDATE_INTERVAL) {
+            lastAnalyticsUpdate = now;
+            const totalScore = Math.floor(gameState.playerCells.reduce((sum, cell) => sum + cell.score, 0));
+            // Record score history (keep last 60 entries ~30 seconds)
+            gameState.analytics.scoreHistory.push({ time: now, score: totalScore });
+            if (gameState.analytics.scoreHistory.length > 60) {
+                gameState.analytics.scoreHistory.shift();
+            }
+            updateAnalyticsSidebar();
+        }
+    }
+
     requestAnimationFrame(gameLoop);
 }
 
