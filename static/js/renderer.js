@@ -114,19 +114,35 @@ export function drawGame() {
     scoreElement.textContent = `Score: ${Math.floor(gameState.playerCells.reduce((sum, cell) => sum + cell.score, 0))}`;
 }
 
+// Offscreen canvas for building the night overlay without affecting the main canvas
+let overlayCanvas = null;
+let overlayCtx = null;
+
+function ensureOverlayCanvas() {
+    if (!overlayCanvas) {
+        overlayCanvas = document.createElement('canvas');
+        overlayCtx = overlayCanvas.getContext('2d');
+    }
+    // Keep overlay canvas in sync with main canvas size
+    if (overlayCanvas.width !== canvas.width || overlayCanvas.height !== canvas.height) {
+        overlayCanvas.width = canvas.width;
+        overlayCanvas.height = canvas.height;
+    }
+}
+
 function drawNightOverlay() {
-    // Save current state
-    ctx.save();
+    ensureOverlayCanvas();
 
-    // Create a temporary canvas for the overlay
-    ctx.globalCompositeOperation = 'source-over';
+    // Clear the overlay canvas
+    overlayCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
 
-    // Fill the entire canvas with the dark overlay
-    ctx.fillStyle = NIGHT_MODE_CONFIG.OVERLAY_COLOR;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    // Fill overlay with dark color
+    overlayCtx.globalCompositeOperation = 'source-over';
+    overlayCtx.fillStyle = NIGHT_MODE_CONFIG.OVERLAY_COLOR;
+    overlayCtx.fillRect(0, 0, overlayCanvas.width, overlayCanvas.height);
 
-    // Cut out circular areas around each player cell using destination-out
-    ctx.globalCompositeOperation = 'destination-out';
+    // Cut out circular areas around each player cell on the overlay canvas
+    overlayCtx.globalCompositeOperation = 'destination-out';
 
     gameState.playerCells.forEach(cell => {
         const screenX = cell.x - gameState.camera.x;
@@ -138,21 +154,21 @@ function drawNightOverlay() {
             cellSize * NIGHT_MODE_CONFIG.RADIUS_SCALE_FACTOR;
 
         // Create radial gradient for smooth edge
-        const gradient = ctx.createRadialGradient(
+        const gradient = overlayCtx.createRadialGradient(
             screenX, screenY, visibilityRadius * NIGHT_MODE_CONFIG.GRADIENT_SPREAD,
             screenX, screenY, visibilityRadius
         );
         gradient.addColorStop(0, 'rgba(0, 0, 0, 1)');
         gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
 
-        ctx.fillStyle = gradient;
-        ctx.beginPath();
-        ctx.arc(screenX, screenY, visibilityRadius, 0, Math.PI * 2);
-        ctx.fill();
+        overlayCtx.fillStyle = gradient;
+        overlayCtx.beginPath();
+        overlayCtx.arc(screenX, screenY, visibilityRadius, 0, Math.PI * 2);
+        overlayCtx.fill();
     });
 
-    // Restore composite operation
-    ctx.restore();
+    // Draw the overlay onto the main canvas (preserves game content underneath)
+    ctx.drawImage(overlayCanvas, 0, 0);
 }
 
 export function drawMinimap() {
