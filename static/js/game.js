@@ -110,9 +110,22 @@ async function initGame() {
     }
 }
 
-// Start the game when the DOM is loaded
+// Wait for DOM, then defer game init until the Play button is clicked
+function onReady() {
+    const startBtn = document.getElementById('start-game-btn');
+    if (startBtn) {
+        startBtn.addEventListener('click', () => {
+            document.getElementById('start-screen').style.display = 'none';
+            initGame();
+        });
+    } else {
+        // Fallback: no start screen (e.g. tests), init immediately
+        initGame();
+    }
+}
+
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initGame);
+    document.addEventListener('DOMContentLoaded', onReady);
 } else {
-    initGame();
+    onReady();
 }
