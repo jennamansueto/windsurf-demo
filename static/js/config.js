@@ -5,6 +5,40 @@ export const AI_STARTING_SCORE = 50;  // Starting score for AI players
 export const FOOD_SCORE = 10;
 export const FOOD_COUNT = 100;
 export const AI_COUNT = 10;
+
+// Difficulty presets
+export const DIFFICULTY_PRESETS = {
+    easy: {
+        AI_COUNT: 5,
+        AI_STARTING_SCORE: 30,
+        AI_DIRECTION_CHANGE_PROB: 0.01,
+        AI_SPEED_MULTIPLIER: 0.8
+    },
+    medium: {
+        AI_COUNT: 10,
+        AI_STARTING_SCORE: 50,
+        AI_DIRECTION_CHANGE_PROB: 0.02,
+        AI_SPEED_MULTIPLIER: 1.0
+    },
+    hard: {
+        AI_COUNT: 15,
+        AI_STARTING_SCORE: 100,
+        AI_DIRECTION_CHANGE_PROB: 0.04,
+        AI_SPEED_MULTIPLIER: 1.3
+    }
+};
+
+let currentDifficulty = 'medium';
+
+export function setDifficulty(level) {
+    if (DIFFICULTY_PRESETS[level]) {
+        currentDifficulty = level;
+    }
+}
+
+export function getDifficultyConfig() {
+    return DIFFICULTY_PRESETS[currentDifficulty];
+}
 export const COLLISION_THRESHOLD = 1.1; // 10% size difference needed for consumption
 
 // Split mechanics

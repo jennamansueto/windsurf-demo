@@ -1,12 +1,13 @@
-import { splitPlayerCell, handlePlayerSplit, updatePlayer, respawnAI } from '../entities.js';
+import { splitPlayerCell, handlePlayerSplit, updatePlayer, respawnAI, initEntities } from '../entities.js';
 import { gameState, mouse } from '../gameState.js';
-import { MIN_SPLIT_SCORE, MAX_PLAYER_CELLS, AI_STARTING_SCORE } from '../config.js';
+import { MIN_SPLIT_SCORE, MAX_PLAYER_CELLS, DIFFICULTY_PRESETS, setDifficulty, getDifficultyConfig } from '../config.js';
 
 // Mock gameState and mouse
 jest.mock('../gameState.js', () => ({
   gameState: {
     playerCells: [],
-    aiPlayers: []
+    aiPlayers: [],
+    food: []
   },
   mouse: { x: 0, y: 0 }
 }));
@@ -115,14 +116,72 @@ describe('updatePlayer', () => {
 });
 
 describe('respawnAI', () => {
-  test('returns AI with correct starting properties', () => {
+  test('returns AI with correct starting properties for medium difficulty', () => {
+    setDifficulty('medium');
     const ai = respawnAI();
 
     expect(ai).toHaveProperty('x');
     expect(ai).toHaveProperty('y');
-    expect(ai.score).toBe(AI_STARTING_SCORE);
+    expect(ai.score).toBe(DIFFICULTY_PRESETS.medium.AI_STARTING_SCORE);
     expect(ai).toHaveProperty('color');
     expect(ai).toHaveProperty('direction');
     expect(ai).toHaveProperty('name');
+  });
+});
+
+describe('difficulty presets', () => {
+  beforeEach(() => {
+    gameState.aiPlayers = [];
+    gameState.food = [];
+  });
+
+  test('easy difficulty uses correct AI_STARTING_SCORE and AI_COUNT', () => {
+    setDifficulty('easy');
+    const config = getDifficultyConfig();
+    expect(config.AI_STARTING_SCORE).toBe(30);
+    expect(config.AI_COUNT).toBe(5);
+
+    initEntities();
+    expect(gameState.aiPlayers.length).toBe(5);
+    gameState.aiPlayers.forEach(ai => {
+      expect(ai.score).toBe(30);
+    });
+  });
+
+  test('medium difficulty uses correct AI_STARTING_SCORE and AI_COUNT', () => {
+    setDifficulty('medium');
+    const config = getDifficultyConfig();
+    expect(config.AI_STARTING_SCORE).toBe(50);
+    expect(config.AI_COUNT).toBe(10);
+
+    initEntities();
+    expect(gameState.aiPlayers.length).toBe(10);
+    gameState.aiPlayers.forEach(ai => {
+      expect(ai.score).toBe(50);
+    });
+  });
+
+  test('hard difficulty uses correct AI_STARTING_SCORE and AI_COUNT', () => {
+    setDifficulty('hard');
+    const config = getDifficultyConfig();
+    expect(config.AI_STARTING_SCORE).toBe(100);
+    expect(config.AI_COUNT).toBe(15);
+
+    initEntities();
+    expect(gameState.aiPlayers.length).toBe(15);
+    gameState.aiPlayers.forEach(ai => {
+      expect(ai.score).toBe(100);
+    });
+  });
+
+  test('respawnAI uses correct AI_STARTING_SCORE per difficulty', () => {
+    setDifficulty('easy');
+    expect(respawnAI().score).toBe(30);
+
+    setDifficulty('medium');
+    expect(respawnAI().score).toBe(50);
+
+    setDifficulty('hard');
+    expect(respawnAI().score).toBe(100);
   });
 });

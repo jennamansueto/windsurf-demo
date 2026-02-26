@@ -3,15 +3,14 @@ import { getSize, getRandomPosition, calculateCenterOfMass, getDistance } from '
 import { 
     WORLD_SIZE, 
     FOOD_COUNT, 
-    AI_COUNT, 
     MIN_SPLIT_SCORE, 
     SPLIT_VELOCITY, 
     MAX_PLAYER_CELLS,
-    AI_STARTING_SCORE,
     MERGE_COOLDOWN,
     MERGE_DISTANCE,
     MERGE_FORCE,
-    MERGE_START_FORCE
+    MERGE_START_FORCE,
+    getDifficultyConfig
 } from './config.js';
 
 const AI_NAMES = [
@@ -245,12 +244,13 @@ export function handlePlayerSplit() {
 }
 
 export function updateAI() {
+    const diffConfig = getDifficultyConfig();
     gameState.aiPlayers.forEach(ai => {
-        if (Math.random() < 0.02) {
+        if (Math.random() < diffConfig.AI_DIRECTION_CHANGE_PROB) {
             ai.direction = Math.random() * Math.PI * 2;
         }
 
-        const speed = 5 / (getSize(ai.score) / 20);
+        const speed = (5 / (getSize(ai.score) / 20)) * diffConfig.AI_SPEED_MULTIPLIER;
         ai.x += Math.cos(ai.direction) * speed;
         ai.y += Math.sin(ai.direction) * speed;
 
@@ -277,12 +277,13 @@ export function initEntities() {
     }
 
     // Initialize AI players
-    for (let i = 0; i < AI_COUNT; i++) {
+    const diffConfig = getDifficultyConfig();
+    for (let i = 0; i < diffConfig.AI_COUNT; i++) {
         const pos = getRandomPosition();
         const ai = {
             x: pos.x,
             y: pos.y,
-            score: AI_STARTING_SCORE,
+            score: diffConfig.AI_STARTING_SCORE,
             color: `hsl(${Math.random() * 360}, 70%, 50%)`,
             direction: Math.random() * Math.PI * 2,
             name: getUnusedAIName()
@@ -299,13 +300,14 @@ export function initEntities() {
 
 // Export for use in other modules
 export function respawnAI() {
+    const diffConfig = getDifficultyConfig();
     const pos = getRandomPosition();
     const name = getUnusedAIName();
     
     return {
         x: pos.x,
         y: pos.y,
-        score: AI_STARTING_SCORE,
+        score: diffConfig.AI_STARTING_SCORE,
         color: `hsl(${Math.random() * 360}, 70%, 50%)`,
         direction: Math.random() * Math.PI * 2,
         name: name

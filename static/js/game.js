@@ -3,6 +3,7 @@ import { initRenderer, resizeCanvas, drawGame, drawMinimap, updateLeaderboard } 
 import { updatePlayer, updateAI, initEntities, handlePlayerSplit } from './entities.js';
 import { handleFoodCollisions, handlePlayerAICollisions, handleAIAICollisions, respawnEntities } from './collisions.js';
 import { initUI } from './ui.js';
+import { setDifficulty } from './config.js';
 
 function setupInputHandlers() {
     const canvas = document.getElementById('gameCanvas');
@@ -86,6 +87,12 @@ async function initGame() {
         setupInputHandlers();
         console.log('Input handlers set up');
         
+        // Set difficulty from the start screen selector
+        const difficultySelect = document.getElementById('difficulty-select');
+        if (difficultySelect) {
+            setDifficulty(difficultySelect.value);
+        }
+
         initEntities();
         console.log('Entities initialized');
 
