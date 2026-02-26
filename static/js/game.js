@@ -3,6 +3,7 @@ import { initRenderer, resizeCanvas, drawGame, drawMinimap, updateLeaderboard } 
 import { updatePlayer, updateAI, initEntities, handlePlayerSplit } from './entities.js';
 import { handleFoodCollisions, handlePlayerAICollisions, handleAIAICollisions, respawnEntities } from './collisions.js';
 import { initUI } from './ui.js';
+import { setDifficulty } from './config.js';
 
 function setupInputHandlers() {
     const canvas = document.getElementById('gameCanvas');
@@ -86,6 +87,12 @@ async function initGame() {
         setupInputHandlers();
         console.log('Input handlers set up');
         
+        // Set difficulty from the start screen selector
+        const difficultySelect = document.getElementById('difficulty-select');
+        if (difficultySelect) {
+            setDifficulty(difficultySelect.value);
+        }
+
         initEntities();
         console.log('Entities initialized');
 
@@ -103,9 +110,22 @@ async function initGame() {
     }
 }
 
-// Start the game when the DOM is loaded
+// Wait for DOM, then defer game init until the Play button is clicked
+function onReady() {
+    const startBtn = document.getElementById('start-game-btn');
+    if (startBtn) {
+        startBtn.addEventListener('click', () => {
+            document.getElementById('start-screen').style.display = 'none';
+            initGame();
+        });
+    } else {
+        // Fallback: no start screen (e.g. tests), init immediately
+        initGame();
+    }
+}
+
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initGame);
+    document.addEventListener('DOMContentLoaded', onReady);
 } else {
-    initGame();
+    onReady();
 }
