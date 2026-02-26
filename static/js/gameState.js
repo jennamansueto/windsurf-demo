@@ -1,4 +1,4 @@
-import { WORLD_SIZE, STARTING_SCORE } from './config.js';
+import { WORLD_SIZE, STARTING_SCORE, HOLIDAY_THEME_ENABLED } from './config.js';
 
 export const gameState = {
     playerCells: [{
@@ -14,7 +14,8 @@ export const gameState = {
         y: 0
     },
     food: [],
-    aiPlayers: []
+    aiPlayers: [],
+    holidayTheme: HOLIDAY_THEME_ENABLED
 };
 
 export const mouse = { x: 0, y: 0 };

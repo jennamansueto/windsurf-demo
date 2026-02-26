@@ -19,6 +19,9 @@ export const MERGE_COOLDOWN = 10000;  // Time in ms before cells can merge
 export const MERGE_FORCE = 0.3;       // Strength of the merging force
 export const MERGE_START_FORCE = 0.1; // Initial attraction force (before merge cooldown)
 
+// Holiday theme feature flag
+export const HOLIDAY_THEME_ENABLED = true;
+
 export const COLORS = {
     PLAYER: '#008080',  // Teal color
     MINIMAP: {
