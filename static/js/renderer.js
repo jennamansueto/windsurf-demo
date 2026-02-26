@@ -29,7 +29,57 @@ function drawCircle(x, y, value, color, isFood) {
     ctx.fill();
 }
 
-function drawCellWithName(x, y, score, color, name) {
+function drawSantaHat(x, y, cellSize) {
+    ctx.save();
+
+    // Scale all hat dimensions relative to cell size
+    const scale = cellSize / 40;
+
+    // Hat sits on top of the cell
+    const hatBaseY = y - cellSize * 0.75;
+
+    // White fur brim (wide band at the base of the hat)
+    const brimWidth = cellSize * 1.1;
+    const brimHeight = 10 * scale;
+    ctx.fillStyle = '#FFFFFF';
+    ctx.beginPath();
+    ctx.ellipse(x, hatBaseY, brimWidth / 2, brimHeight / 2, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Red hat body (triangle curving to the right)
+    ctx.fillStyle = '#CC0000';
+    ctx.beginPath();
+    ctx.moveTo(x - brimWidth / 2, hatBaseY);
+    // Left side curves up
+    ctx.quadraticCurveTo(
+        x - cellSize * 0.2, hatBaseY - cellSize * 0.9,
+        x + cellSize * 0.5, hatBaseY - cellSize * 0.85
+    );
+    // Tip curves back down to the right
+    ctx.quadraticCurveTo(
+        x + cellSize * 0.3, hatBaseY - cellSize * 0.5,
+        x + brimWidth / 2, hatBaseY
+    );
+    ctx.closePath();
+    ctx.fill();
+
+    // White pompom at the tip
+    const pompomRadius = 6 * scale;
+    ctx.fillStyle = '#FFFFFF';
+    ctx.beginPath();
+    ctx.arc(
+        x + cellSize * 0.5,
+        hatBaseY - cellSize * 0.85,
+        pompomRadius,
+        0,
+        Math.PI * 2
+    );
+    ctx.fill();
+
+    ctx.restore();
+}
+
+function drawCellWithName(x, y, score, color, name, isPlayer) {
     const size = getSize(score);
     
     // Draw cell
@@ -37,6 +87,11 @@ function drawCellWithName(x, y, score, color, name) {
     ctx.arc(x, y, size, 0, Math.PI * 2);
     ctx.fillStyle = color;
     ctx.fill();
+
+    // Draw Santa hat on player cell if holiday theme is active
+    if (isPlayer && gameState.holidayTheme) {
+        drawSantaHat(x, y, size);
+    }
 
     // Draw name
     if (size > 20) {  // Only draw name if cell is big enough
@@ -89,7 +144,7 @@ export function drawGame() {
         
         if (screenX >= -size && screenX <= canvas.width + size &&
             screenY >= -size && screenY <= canvas.height + size) {
-            drawCellWithName(screenX, screenY, ai.score, ai.color, ai.name);
+            drawCellWithName(screenX, screenY, ai.score, ai.color, ai.name, false);
         }
     });
 
@@ -101,7 +156,7 @@ export function drawGame() {
         
         if (screenX >= -size && screenX <= canvas.width + size &&
             screenY >= -size && screenY <= canvas.height + size) {
-            drawCellWithName(screenX, screenY, cell.score, COLORS.PLAYER, gameState.playerName);
+            drawCellWithName(screenX, screenY, cell.score, COLORS.PLAYER, gameState.playerName, true);
         }
     });
 

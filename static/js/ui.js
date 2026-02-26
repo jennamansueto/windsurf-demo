@@ -1,5 +1,8 @@
 // UI Controls
 
+import { HOLIDAY_THEME_ENABLED } from './config.js';
+import { gameState } from './gameState.js';
+
 function loadDarkMode() {
     const isDarkMode = localStorage.getItem('darkMode') === 'true';
     document.documentElement.setAttribute('data-theme', isDarkMode ? 'dark' : '');
@@ -42,4 +45,19 @@ export function initUI() {
         document.documentElement.setAttribute('data-theme', isDarkMode ? 'dark' : '');
         saveDarkMode(isDarkMode);
     });
+
+    // Holiday theme toggle
+    const holidayThemeGroup = document.getElementById('holiday-theme-group');
+    const holidayThemeToggle = document.getElementById('holiday-theme-toggle');
+
+    if (!HOLIDAY_THEME_ENABLED) {
+        holidayThemeGroup.style.display = 'none';
+    } else {
+        // Set initial toggle state to match gameState
+        holidayThemeToggle.checked = gameState.holidayTheme;
+
+        holidayThemeToggle.addEventListener('change', (e) => {
+            gameState.holidayTheme = e.target.checked;
+        });
+    }
 }
