@@ -1,6 +1,6 @@
 import { gameState } from './gameState.js';
 import { getSize, calculateCenterOfMass } from './utils.js';
-import { WORLD_SIZE, COLORS, FOOD_SIZE } from './config.js';
+import { WORLD_SIZE, COLORS, FOOD_SIZE, NIGHT_MODE_ENABLED, NIGHT_MODE_CONFIG } from './config.js';
 
 let canvas, ctx, minimapCanvas, minimapCtx, scoreElement, leaderboardContent;
 
@@ -105,8 +105,70 @@ export function drawGame() {
         }
     });
 
+    // Draw night mode overlay if active
+    if (NIGHT_MODE_ENABLED && gameState.nightModeActive) {
+        drawNightOverlay();
+    }
+
     // Update score display
     scoreElement.textContent = `Score: ${Math.floor(gameState.playerCells.reduce((sum, cell) => sum + cell.score, 0))}`;
+}
+
+// Offscreen canvas for building the night overlay without affecting the main canvas
+let overlayCanvas = null;
+let overlayCtx = null;
+
+function ensureOverlayCanvas() {
+    if (!overlayCanvas) {
+        overlayCanvas = document.createElement('canvas');
+        overlayCtx = overlayCanvas.getContext('2d');
+    }
+    // Keep overlay canvas in sync with main canvas size
+    if (overlayCanvas.width !== canvas.width || overlayCanvas.height !== canvas.height) {
+        overlayCanvas.width = canvas.width;
+        overlayCanvas.height = canvas.height;
+    }
+}
+
+function drawNightOverlay() {
+    ensureOverlayCanvas();
+
+    // Clear the overlay canvas
+    overlayCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
+
+    // Fill overlay with dark color
+    overlayCtx.globalCompositeOperation = 'source-over';
+    overlayCtx.fillStyle = NIGHT_MODE_CONFIG.OVERLAY_COLOR;
+    overlayCtx.fillRect(0, 0, overlayCanvas.width, overlayCanvas.height);
+
+    // Cut out circular areas around each player cell on the overlay canvas
+    overlayCtx.globalCompositeOperation = 'destination-out';
+
+    gameState.playerCells.forEach(cell => {
+        const screenX = cell.x - gameState.camera.x;
+        const screenY = cell.y - gameState.camera.y;
+        const cellSize = getSize(cell.score);
+
+        // Visibility radius scales with player size
+        const visibilityRadius = NIGHT_MODE_CONFIG.BASE_VISIBILITY_RADIUS +
+            cellSize * NIGHT_MODE_CONFIG.RADIUS_SCALE_FACTOR;
+
+        // Create radial gradient for smooth edge
+        const gradient = overlayCtx.createRadialGradient(
+            screenX, screenY, visibilityRadius * NIGHT_MODE_CONFIG.GRADIENT_SPREAD,
+            screenX, screenY, visibilityRadius
+        );
+        gradient.addColorStop(0, 'rgba(0, 0, 0, 1)');
+        gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+
+        overlayCtx.fillStyle = gradient;
+        overlayCtx.beginPath();
+        overlayCtx.arc(screenX, screenY, visibilityRadius, 0, Math.PI * 2);
+        overlayCtx.fill();
+    });
+
+    // Draw the overlay onto the main canvas (preserves game content underneath)
+    ctx.drawImage(overlayCanvas, 0, 0);
 }
 
 export function drawMinimap() {

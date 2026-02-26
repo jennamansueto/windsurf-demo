@@ -19,6 +19,17 @@ export const MERGE_COOLDOWN = 10000;  // Time in ms before cells can merge
 export const MERGE_FORCE = 0.3;       // Strength of the merging force
 export const MERGE_START_FORCE = 0.1; // Initial attraction force (before merge cooldown)
 
+// Night mode feature flag
+export const NIGHT_MODE_ENABLED = true;
+
+// Night mode configuration
+export const NIGHT_MODE_CONFIG = {
+    BASE_VISIBILITY_RADIUS: 150,   // Base radius of the visible area in pixels
+    RADIUS_SCALE_FACTOR: 1.5,      // How much the radius scales with player size
+    OVERLAY_COLOR: 'rgba(0, 0, 0, 0.95)', // Color of the fog-of-war overlay
+    GRADIENT_SPREAD: 0.7           // Where the gradient starts (0-1), controls softness of edge
+};
+
 export const COLORS = {
     PLAYER: '#008080',  // Teal color
     MINIMAP: {
