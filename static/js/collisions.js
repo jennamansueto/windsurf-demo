@@ -1,6 +1,6 @@
 import { gameState } from './gameState.js';
 import { getDistance, getSize, getRandomPosition, findSafeSpawnLocation } from './utils.js';
-import { FOOD_SIZE, FOOD_SCORE, COLLISION_THRESHOLD, FOOD_COUNT, AI_COUNT, STARTING_SCORE, WORLD_SIZE } from './config.js';
+import { FOOD_SIZE, FOOD_SCORE, COLLISION_THRESHOLD, FOOD_COUNT, AI_COUNT, STARTING_SCORE, WORLD_SIZE, ANALYTICS_MODE_ENABLED } from './config.js';
 import { respawnAI } from './entities.js';
 
 export function handleFoodCollisions() {
@@ -12,6 +12,9 @@ export function handleFoodCollisions() {
 
             if (distance < playerSize + FOOD_SIZE) {
                 playerCell.score += FOOD_SCORE;
+                if (ANALYTICS_MODE_ENABLED && gameState.analytics) {
+                    gameState.analytics.foodEaten++;
+                }
                 return false;
             }
             return true;
@@ -56,6 +59,9 @@ export function handlePlayerAICollisions() {
                     const currentGain = scoreGains.get(playerCellIndex) || 0;
                     scoreGains.set(playerCellIndex, currentGain + ai.score + 100);
                     aiIndicesToRemove.add(aiIndex);
+                    if (ANALYTICS_MODE_ENABLED && gameState.analytics) {
+                        gameState.analytics.aiConsumed++;
+                    }
                 }
                 // AI is bigger
                 else if (aiSize > playerSize * COLLISION_THRESHOLD) {
@@ -94,6 +100,13 @@ export function handlePlayerAICollisions() {
             velocityX: 0,
             velocityY: 0
         });
+        // Reset analytics on player death
+        if (ANALYTICS_MODE_ENABLED && gameState.analytics) {
+            gameState.analytics.aiConsumed = 0;
+            gameState.analytics.foodEaten = 0;
+            gameState.analytics.timeAliveStart = Date.now();
+            gameState.analytics.scoreHistory = [];
+        }
     }
 }
 
