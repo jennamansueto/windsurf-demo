@@ -11,7 +11,9 @@ import {
     MERGE_COOLDOWN,
     MERGE_DISTANCE,
     MERGE_FORCE,
-    MERGE_START_FORCE
+    MERGE_START_FORCE,
+    SPEED_BOOST_COUNT,
+    SPEED_BOOST_MULTIPLIER
 } from './config.js';
 
 const AI_NAMES = [
@@ -178,7 +180,24 @@ export function updatePlayer() {
         // Update each cell
         gameState.playerCells.forEach(cell => {
             // Base speed is inversely proportional to cell size
-            const speed = 5 / (getSize(cell.score) / 20);
+            let speed = 5 / (getSize(cell.score) / 20);
+
+            // Apply speed boost if active
+            if (cell.speedBoostExpiry && Date.now() < cell.speedBoostExpiry) {
+                speed *= SPEED_BOOST_MULTIPLIER;
+                // Add a trail particle each frame while boosted
+                gameState.trailParticles.push({
+                    x: cell.x,
+                    y: cell.y,
+                    radius: getSize(cell.score) * 0.8,
+                    alpha: 0.6,
+                    color: `hsl(50, 100%, 60%)`
+                });
+            } else {
+                // Clear glow when boost expires
+                cell.glowing = false;
+                cell.speedBoostExpiry = null;
+            }
 
             // Update velocity (with inertia)
             cell.velocityX = cell.velocityX * 0.9 + direction.x * speed * 0.1;
@@ -250,7 +269,24 @@ export function updateAI() {
             ai.direction = Math.random() * Math.PI * 2;
         }
 
-        const speed = 5 / (getSize(ai.score) / 20);
+        let speed = 5 / (getSize(ai.score) / 20);
+
+        // Apply speed boost if active
+        if (ai.speedBoostExpiry && Date.now() < ai.speedBoostExpiry) {
+            speed *= SPEED_BOOST_MULTIPLIER;
+            // Add a trail particle each frame while boosted
+            gameState.trailParticles.push({
+                x: ai.x,
+                y: ai.y,
+                radius: getSize(ai.score) * 0.8,
+                alpha: 0.6,
+                color: `hsl(50, 100%, 60%)`
+            });
+        } else {
+            ai.glowing = false;
+            ai.speedBoostExpiry = null;
+        }
+
         ai.x += Math.cos(ai.direction) * speed;
         ai.y += Math.sin(ai.direction) * speed;
 
@@ -262,6 +298,8 @@ export function updateAI() {
 export function initEntities() {
     // Clear existing entities
     gameState.food = [];
+    gameState.speedBoostFood = [];
+    gameState.trailParticles = [];
     gameState.aiPlayers = [];
     
     console.log('Initializing entities...');
@@ -273,6 +311,17 @@ export function initEntities() {
             x: pos.x,
             y: pos.y,
             color: `hsl(${Math.random() * 360}, 50%, 50%)`
+        });
+    }
+
+    // Initialize speed boost food
+    for (let i = 0; i < SPEED_BOOST_COUNT; i++) {
+        const pos = getRandomPosition();
+        gameState.speedBoostFood.push({
+            x: pos.x,
+            y: pos.y,
+            color: `hsl(50, 100%, 60%)`,
+            type: 'speedBoost'
         });
     }
 

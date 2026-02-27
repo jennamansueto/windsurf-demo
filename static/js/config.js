@@ -19,6 +19,11 @@ export const MERGE_COOLDOWN = 10000;  // Time in ms before cells can merge
 export const MERGE_FORCE = 0.3;       // Strength of the merging force
 export const MERGE_START_FORCE = 0.1; // Initial attraction force (before merge cooldown)
 
+// Speed boost mechanics
+export const SPEED_BOOST_COUNT = 5;       // number of speed boost food items to spawn
+export const SPEED_BOOST_MULTIPLIER = 2;  // 2x speed
+export const SPEED_BOOST_DURATION = 5000; // 5 seconds in milliseconds
+
 export const COLORS = {
     PLAYER: '#008080',  // Teal color
     MINIMAP: {

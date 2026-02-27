@@ -1,6 +1,6 @@
 import { gameState } from './gameState.js';
 import { getDistance, getSize, getRandomPosition, findSafeSpawnLocation } from './utils.js';
-import { FOOD_SIZE, FOOD_SCORE, COLLISION_THRESHOLD, FOOD_COUNT, AI_COUNT, STARTING_SCORE, WORLD_SIZE } from './config.js';
+import { FOOD_SIZE, FOOD_SCORE, COLLISION_THRESHOLD, FOOD_COUNT, AI_COUNT, STARTING_SCORE, WORLD_SIZE, SPEED_BOOST_COUNT, SPEED_BOOST_DURATION } from './config.js';
 import { respawnAI } from './entities.js';
 
 export function handleFoodCollisions() {
@@ -30,6 +30,38 @@ export function handleFoodCollisions() {
             }
             return true;
         });
+    }
+}
+
+export function handleSpeedBoostCollisions() {
+    // Player cells eating speed boost food
+    for (const playerCell of gameState.playerCells) {
+        for (let i = gameState.speedBoostFood.length - 1; i >= 0; i--) {
+            const boost = gameState.speedBoostFood[i];
+            const dx = playerCell.x - boost.x;
+            const dy = playerCell.y - boost.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < getSize(playerCell.score)) {
+                gameState.speedBoostFood.splice(i, 1);
+                playerCell.speedBoostExpiry = Date.now() + SPEED_BOOST_DURATION;
+                playerCell.glowing = true;
+            }
+        }
+    }
+
+    // AI eating speed boost food
+    for (const ai of gameState.aiPlayers) {
+        for (let i = gameState.speedBoostFood.length - 1; i >= 0; i--) {
+            const boost = gameState.speedBoostFood[i];
+            const dx = ai.x - boost.x;
+            const dy = ai.y - boost.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < getSize(ai.score)) {
+                gameState.speedBoostFood.splice(i, 1);
+                ai.speedBoostExpiry = Date.now() + SPEED_BOOST_DURATION;
+                ai.glowing = true;
+            }
+        }
     }
 }
 
@@ -151,6 +183,17 @@ export function respawnEntities() {
             x: pos.x,
             y: pos.y,
             color: `hsl(${Math.random() * 360}, 50%, 50%)`
+        });
+    }
+
+    // Respawn speed boost food if needed
+    while (gameState.speedBoostFood.length < SPEED_BOOST_COUNT) {
+        const pos = getRandomPosition();
+        gameState.speedBoostFood.push({
+            x: pos.x,
+            y: pos.y,
+            color: `hsl(50, 100%, 60%)`,
+            type: 'speedBoost'
         });
     }
 
