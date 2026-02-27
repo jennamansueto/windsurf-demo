@@ -1,6 +1,7 @@
 import { gameState } from './gameState.js';
 import { getSize, calculateCenterOfMass } from './utils.js';
 import { WORLD_SIZE, COLORS, FOOD_SIZE } from './config.js';
+import { updateParticles, drawParticles } from './particles.js';
 
 let canvas, ctx, minimapCanvas, minimapCtx, scoreElement, leaderboardContent;
 
@@ -104,6 +105,10 @@ export function drawGame() {
             drawCellWithName(screenX, screenY, cell.score, COLORS.PLAYER, gameState.playerName);
         }
     });
+
+    // Update and draw particles
+    updateParticles();
+    drawParticles(ctx);
 
     // Update score display
     scoreElement.textContent = `Score: ${Math.floor(gameState.playerCells.reduce((sum, cell) => sum + cell.score, 0))}`;
