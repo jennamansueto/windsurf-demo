@@ -6,9 +6,15 @@ import { MIN_SPLIT_SCORE, MAX_PLAYER_CELLS, AI_STARTING_SCORE } from '../config.
 jest.mock('../gameState.js', () => ({
   gameState: {
     playerCells: [],
-    aiPlayers: []
+    aiPlayers: [],
+    particles: []
   },
   mouse: { x: 0, y: 0 }
+}));
+
+// Mock particles module so split calls don't fail
+jest.mock('../particles.js', () => ({
+  spawnExpandingRing: jest.fn()
 }));
 
 describe('splitPlayerCell', () => {

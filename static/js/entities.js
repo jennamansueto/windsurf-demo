@@ -1,5 +1,6 @@
 import { gameState, mouse } from './gameState.js';
 import { getSize, getRandomPosition, calculateCenterOfMass, getDistance } from './utils.js';
+import { spawnExpandingRing } from './particles.js';
 import { 
     WORLD_SIZE, 
     FOOD_COUNT, 
@@ -232,6 +233,9 @@ export function splitPlayerCell(cell) {
 
     // Add new cell
     gameState.playerCells.push(newCell);
+
+    // Spawn expanding ring effect at the split position
+    spawnExpandingRing(cell.x, cell.y, getSize(cell.score));
 }
 
 export function handlePlayerSplit() {

@@ -7,8 +7,15 @@ jest.mock('../gameState.js', () => ({
   gameState: {
     playerCells: [],
     aiPlayers: [],
-    food: []
+    food: [],
+    particles: []
   }
+}));
+
+// Mock particles module so collision calls don't fail
+jest.mock('../particles.js', () => ({
+  spawnBurstParticles: jest.fn(),
+  spawnSparkles: jest.fn()
 }));
 
 describe('handleFoodCollisions', () => {
