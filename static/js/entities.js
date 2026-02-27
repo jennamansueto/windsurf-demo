@@ -1,4 +1,5 @@
 import { gameState, mouse } from './gameState.js';
+import { spawnSplitRing } from './particles.js';
 import { getSize, getRandomPosition, calculateCenterOfMass, getDistance } from './utils.js';
 import { 
     WORLD_SIZE, 
@@ -241,7 +242,10 @@ export function handlePlayerSplit() {
         gameState.playerCells.length < MAX_PLAYER_CELLS
     );
 
-    cellsToSplit.forEach(cell => splitPlayerCell(cell));
+    cellsToSplit.forEach(cell => {
+        spawnSplitRing(cell.x, cell.y);
+        splitPlayerCell(cell);
+    });
 }
 
 export function updateAI() {
