@@ -1,7 +1,8 @@
 import { gameState } from './gameState.js';
 import { getDistance, getSize, getRandomPosition, findSafeSpawnLocation } from './utils.js';
-import { FOOD_SIZE, FOOD_SCORE, COLLISION_THRESHOLD, FOOD_COUNT, AI_COUNT, STARTING_SCORE, WORLD_SIZE } from './config.js';
+import { FOOD_SIZE, FOOD_SCORE, COLLISION_THRESHOLD, FOOD_COUNT, AI_COUNT, STARTING_SCORE, WORLD_SIZE, COLORS } from './config.js';
 import { respawnAI } from './entities.js';
+import { spawnSparkles, spawnBurstParticles } from './particles.js';
 
 export function handleFoodCollisions() {
     // Player cells eating food
@@ -12,6 +13,7 @@ export function handleFoodCollisions() {
 
             if (distance < playerSize + FOOD_SIZE) {
                 playerCell.score += FOOD_SCORE;
+                spawnSparkles(food.x, food.y);
                 return false;
             }
             return true;
@@ -26,6 +28,7 @@ export function handleFoodCollisions() {
 
             if (distance < aiSize + FOOD_SIZE) {
                 ai.score += FOOD_SCORE;
+                spawnSparkles(food.x, food.y);
                 return false;
             }
             return true;
@@ -56,11 +59,13 @@ export function handlePlayerAICollisions() {
                     const currentGain = scoreGains.get(playerCellIndex) || 0;
                     scoreGains.set(playerCellIndex, currentGain + ai.score + 100);
                     aiIndicesToRemove.add(aiIndex);
+                    spawnBurstParticles(ai.x, ai.y, ai.color);
                 }
                 // AI is bigger
                 else if (aiSize > playerSize * COLLISION_THRESHOLD) {
                     ai.score += playerCell.score + 100;
                     playerCellsToRemove.add(playerCellIndex);
+                    spawnBurstParticles(playerCell.x, playerCell.y, COLORS.PLAYER);
                 }
             }
         });
@@ -120,10 +125,12 @@ export function handleAIAICollisions() {
                     const currentGain = scoreGains.get(i) || 0;
                     scoreGains.set(i, currentGain + ai2.score + 100);
                     aisToRemove.add(j);
+                    spawnBurstParticles(ai2.x, ai2.y, ai2.color);
                 } else if (ai2Size > ai1Size * COLLISION_THRESHOLD) {
                     const currentGain = scoreGains.get(j) || 0;
                     scoreGains.set(j, currentGain + ai1.score + 100);
                     aisToRemove.add(i);
+                    spawnBurstParticles(ai1.x, ai1.y, ai1.color);
                     break;
                 }
             }

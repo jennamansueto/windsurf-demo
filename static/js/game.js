@@ -3,6 +3,7 @@ import { initRenderer, resizeCanvas, drawGame, drawMinimap, updateLeaderboard } 
 import { updatePlayer, updateAI, initEntities, handlePlayerSplit } from './entities.js';
 import { handleFoodCollisions, handlePlayerAICollisions, handleAIAICollisions, respawnEntities } from './collisions.js';
 import { initUI } from './ui.js';
+import { updateParticles } from './particles.js';
 
 function setupInputHandlers() {
     const canvas = document.getElementById('gameCanvas');
@@ -48,10 +49,16 @@ function verifyGameState() {
     }
 }
 
-function gameLoop() {
+let lastTime = 0;
+
+function gameLoop(timestamp) {
+    const dt = lastTime ? (timestamp - lastTime) / 1000 : 0.016;
+    lastTime = timestamp;
+
     updatePlayer();
     updateAI();
     checkCollisions();
+    updateParticles(dt);
     updateLeaderboard();
     drawGame();
     drawMinimap();
