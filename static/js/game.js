@@ -3,7 +3,7 @@ import { initRenderer, resizeCanvas, drawGame, drawMinimap, updateLeaderboard } 
 import { updatePlayer, updateAI, initEntities, handlePlayerSplit } from './entities.js';
 import { handleFoodCollisions, handlePlayerAICollisions, handleAIAICollisions, respawnEntities } from './collisions.js';
 import { initUI } from './ui.js';
-import { updateParticles, drawParticles } from './particles.js';
+import { updateParticles } from './particles.js';
 
 function setupInputHandlers() {
     const canvas = document.getElementById('gameCanvas');
