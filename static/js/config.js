@@ -7,6 +7,12 @@ export const FOOD_COUNT = 100;
 export const AI_COUNT = 10;
 export const COLLISION_THRESHOLD = 1.1; // 10% size difference needed for consumption
 
+// Speed boost
+export const SPEED_BOOST_DURATION = 5000;       // milliseconds
+export const SPEED_BOOST_MULTIPLIER = 2;
+export const SPEED_BOOST_FOOD_COLOR = 'hsl(185, 100%, 55%)'; // bright cyan/electric
+export const SPEED_BOOST_FOOD_SIZE = 8;          // slightly larger than regular food (5px)
+
 // Split mechanics
 export const MIN_SPLIT_SCORE = 40;  // Minimum score needed to split
 export const SPLIT_VELOCITY = 12;   // Initial velocity of split cells

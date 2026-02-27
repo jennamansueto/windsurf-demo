@@ -1,6 +1,6 @@
 import { gameState } from './gameState.js';
 import { getSize, calculateCenterOfMass } from './utils.js';
-import { WORLD_SIZE, COLORS, FOOD_SIZE } from './config.js';
+import { WORLD_SIZE, COLORS, FOOD_SIZE, SPEED_BOOST_FOOD_SIZE, SPEED_BOOST_FOOD_COLOR } from './config.js';
 
 let canvas, ctx, minimapCanvas, minimapCtx, scoreElement, leaderboardContent;
 
@@ -72,12 +72,22 @@ export function drawGame() {
 
     // Draw food
     gameState.food.forEach(food => {
+        const foodRadius = food.type === 'speedBoost' ? SPEED_BOOST_FOOD_SIZE : FOOD_SIZE;
         const screenX = food.x - gameState.camera.x;
         const screenY = food.y - gameState.camera.y;
         
-        if (screenX >= -FOOD_SIZE && screenX <= canvas.width + FOOD_SIZE &&
-            screenY >= -FOOD_SIZE && screenY <= canvas.height + FOOD_SIZE) {
-            drawCircle(screenX, screenY, FOOD_SIZE, food.color, true);
+        if (screenX >= -foodRadius && screenX <= canvas.width + foodRadius &&
+            screenY >= -foodRadius && screenY <= canvas.height + foodRadius) {
+            if (food.type === 'speedBoost') {
+                // Draw speed boost food with a pulsing glow
+                ctx.save();
+                ctx.shadowBlur = 15;
+                ctx.shadowColor = SPEED_BOOST_FOOD_COLOR;
+                drawCircle(screenX, screenY, foodRadius, food.color, true);
+                ctx.restore();
+            } else {
+                drawCircle(screenX, screenY, foodRadius, food.color, true);
+            }
         }
     });
 
@@ -101,7 +111,43 @@ export function drawGame() {
         
         if (screenX >= -size && screenX <= canvas.width + size &&
             screenY >= -size && screenY <= canvas.height + size) {
-            drawCellWithName(screenX, screenY, cell.score, COLORS.PLAYER, gameState.playerName);
+            // Draw trail if speed boost is active
+            if (cell.speedBoostActive && cell.trail) {
+                const now = Date.now();
+                // Add current position to trail
+                cell.trail.push({ x: cell.x, y: cell.y, timestamp: now });
+                // Remove trail entries older than 300ms
+                cell.trail = cell.trail.filter(t => now - t.timestamp < 300);
+
+                // Draw trail points (before the cell so cell renders on top)
+                cell.trail.forEach(point => {
+                    const trailScreenX = point.x - gameState.camera.x;
+                    const trailScreenY = point.y - gameState.camera.y;
+                    const age = now - point.timestamp;
+                    const alpha = Math.max(0, 1 - age / 300);
+
+                    ctx.save();
+                    ctx.globalAlpha = alpha * 0.5;
+                    ctx.shadowBlur = 10;
+                    ctx.shadowColor = SPEED_BOOST_FOOD_COLOR;
+                    ctx.beginPath();
+                    ctx.arc(trailScreenX, trailScreenY, size * 0.6, 0, Math.PI * 2);
+                    ctx.fillStyle = SPEED_BOOST_FOOD_COLOR;
+                    ctx.fill();
+                    ctx.restore();
+                });
+
+                // Draw cell with glow effect
+                ctx.save();
+                ctx.shadowBlur = 20;
+                ctx.shadowColor = SPEED_BOOST_FOOD_COLOR;
+                drawCellWithName(screenX, screenY, cell.score, COLORS.PLAYER, gameState.playerName);
+                ctx.restore();
+            } else {
+                // Clear trail when boost ends
+                cell.trail = [];
+                drawCellWithName(screenX, screenY, cell.score, COLORS.PLAYER, gameState.playerName);
+            }
         }
     });
 

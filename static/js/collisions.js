@@ -1,17 +1,24 @@
 import { gameState } from './gameState.js';
 import { getDistance, getSize, getRandomPosition, findSafeSpawnLocation } from './utils.js';
-import { FOOD_SIZE, FOOD_SCORE, COLLISION_THRESHOLD, FOOD_COUNT, AI_COUNT, STARTING_SCORE, WORLD_SIZE } from './config.js';
-import { respawnAI } from './entities.js';
+import { FOOD_SIZE, FOOD_SCORE, COLLISION_THRESHOLD, FOOD_COUNT, AI_COUNT, STARTING_SCORE, WORLD_SIZE, SPEED_BOOST_DURATION, SPEED_BOOST_FOOD_SIZE } from './config.js';
+import { respawnAI, spawnSpeedBoostFood } from './entities.js';
 
 export function handleFoodCollisions() {
     // Player cells eating food
     for (const playerCell of gameState.playerCells) {
         gameState.food = gameState.food.filter(food => {
+            const foodRadius = food.type === 'speedBoost' ? SPEED_BOOST_FOOD_SIZE : FOOD_SIZE;
             const distance = getDistance(playerCell, food);
             const playerSize = getSize(playerCell.score);
 
-            if (distance < playerSize + FOOD_SIZE) {
-                playerCell.score += FOOD_SCORE;
+            if (distance < playerSize + foodRadius) {
+                if (food.type === 'speedBoost') {
+                    playerCell.speedBoostActive = true;
+                    playerCell.speedBoostExpiry = Date.now() + SPEED_BOOST_DURATION;
+                    playerCell.trail = playerCell.trail || [];
+                } else {
+                    playerCell.score += FOOD_SCORE;
+                }
                 return false;
             }
             return true;
@@ -152,6 +159,14 @@ export function respawnEntities() {
             y: pos.y,
             color: `hsl(${Math.random() * 360}, 50%, 50%)`
         });
+    }
+
+    // Ensure there are always some speed boost food items (up to 3)
+    const speedBoostCount = gameState.food.filter(f => f.type === 'speedBoost').length;
+    if (speedBoostCount < 3) {
+        for (let i = speedBoostCount; i < 3; i++) {
+            gameState.food.push(spawnSpeedBoostFood());
+        }
     }
 
     // Respawn AI players if needed
