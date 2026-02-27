@@ -70,6 +70,27 @@ export function drawGame() {
     gameState.camera.x = centerOfMass.x - canvas.width / 2;
     gameState.camera.y = centerOfMass.y - canvas.height / 2;
 
+    // Draw trail particles (behind everything else)
+    for (let i = gameState.trailParticles.length - 1; i >= 0; i--) {
+        const p = gameState.trailParticles[i];
+        const screenX = p.x - gameState.camera.x;
+        const screenY = p.y - gameState.camera.y;
+        ctx.save();
+        ctx.globalAlpha = p.alpha;
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = p.color;
+        ctx.fillStyle = p.color;
+        ctx.beginPath();
+        ctx.arc(screenX, screenY, p.radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+
+        p.alpha -= 0.05;
+        if (p.alpha <= 0) {
+            gameState.trailParticles.splice(i, 1);
+        }
+    }
+
     // Draw food
     gameState.food.forEach(food => {
         const screenX = food.x - gameState.camera.x;
@@ -81,6 +102,21 @@ export function drawGame() {
         }
     });
 
+    // Draw speed boost food with glow
+    gameState.speedBoostFood.forEach(food => {
+        const screenX = food.x - gameState.camera.x;
+        const screenY = food.y - gameState.camera.y;
+        
+        if (screenX >= -FOOD_SIZE && screenX <= canvas.width + FOOD_SIZE &&
+            screenY >= -FOOD_SIZE && screenY <= canvas.height + FOOD_SIZE) {
+            ctx.save();
+            ctx.shadowBlur = 15;
+            ctx.shadowColor = `hsl(50, 100%, 60%)`;
+            drawCircle(screenX, screenY, FOOD_SIZE, food.color, true);
+            ctx.restore();
+        }
+    });
+
     // Draw AI players
     gameState.aiPlayers.forEach(ai => {
         const screenX = ai.x - gameState.camera.x;
@@ -89,7 +125,12 @@ export function drawGame() {
         
         if (screenX >= -size && screenX <= canvas.width + size &&
             screenY >= -size && screenY <= canvas.height + size) {
+            if (ai.glowing && ai.speedBoostExpiry && Date.now() < ai.speedBoostExpiry) {
+                ctx.shadowBlur = 20;
+                ctx.shadowColor = `hsl(50, 100%, 60%)`;
+            }
             drawCellWithName(screenX, screenY, ai.score, ai.color, ai.name);
+            ctx.shadowBlur = 0;
         }
     });
 
@@ -101,7 +142,12 @@ export function drawGame() {
         
         if (screenX >= -size && screenX <= canvas.width + size &&
             screenY >= -size && screenY <= canvas.height + size) {
+            if (cell.glowing && cell.speedBoostExpiry && Date.now() < cell.speedBoostExpiry) {
+                ctx.shadowBlur = 20;
+                ctx.shadowColor = `hsl(50, 100%, 60%)`;
+            }
             drawCellWithName(screenX, screenY, cell.score, COLORS.PLAYER, gameState.playerName);
+            ctx.shadowBlur = 0;
         }
     });
 

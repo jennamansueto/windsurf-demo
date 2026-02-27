@@ -14,6 +14,8 @@ export const gameState = {
         y: 0
     },
     food: [],
+    speedBoostFood: [],   // holds speed boost food items
+    trailParticles: [],   // holds glowing trail particles for boosted players
     aiPlayers: []
 };
 
