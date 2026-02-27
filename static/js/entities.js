@@ -11,7 +11,10 @@ import {
     MERGE_COOLDOWN,
     MERGE_DISTANCE,
     MERGE_FORCE,
-    MERGE_START_FORCE
+    MERGE_START_FORCE,
+    SPEED_BOOST_MULTIPLIER,
+    SPEED_BOOST_FOOD_COLOR,
+    SPEED_BOOST_FOOD_SIZE
 } from './config.js';
 
 const AI_NAMES = [
@@ -178,7 +181,14 @@ export function updatePlayer() {
         // Update each cell
         gameState.playerCells.forEach(cell => {
             // Base speed is inversely proportional to cell size
-            const speed = 5 / (getSize(cell.score) / 20);
+            let speed = 5 / (getSize(cell.score) / 20);
+
+            // Apply speed boost if active
+            if (cell.speedBoostActive && Date.now() < cell.speedBoostExpiry) {
+                speed *= SPEED_BOOST_MULTIPLIER;
+            } else {
+                cell.speedBoostActive = false;
+            }
 
             // Update velocity (with inertia)
             cell.velocityX = cell.velocityX * 0.9 + direction.x * speed * 0.1;
@@ -268,12 +278,12 @@ export function initEntities() {
 
     // Initialize food
     for (let i = 0; i < FOOD_COUNT; i++) {
-        const pos = getRandomPosition();
-        gameState.food.push({
-            x: pos.x,
-            y: pos.y,
-            color: `hsl(${Math.random() * 360}, 50%, 50%)`
-        });
+        gameState.food.push(spawnRegularFood());
+    }
+
+    // Spawn some initial speed boost food
+    for (let i = 0; i < 3; i++) {
+        gameState.food.push(spawnSpeedBoostFood());
     }
 
     // Initialize AI players
@@ -295,6 +305,26 @@ export function initEntities() {
         aiCount: gameState.aiPlayers.length,
         playerCells: gameState.playerCells.length
     });
+}
+
+export function spawnRegularFood() {
+    const pos = getRandomPosition();
+    return {
+        x: pos.x,
+        y: pos.y,
+        color: `hsl(${Math.random() * 360}, 50%, 50%)`
+    };
+}
+
+export function spawnSpeedBoostFood() {
+    const pos = getRandomPosition();
+    return {
+        x: pos.x,
+        y: pos.y,
+        color: SPEED_BOOST_FOOD_COLOR,
+        type: 'speedBoost',
+        radius: SPEED_BOOST_FOOD_SIZE
+    };
 }
 
 // Export for use in other modules
