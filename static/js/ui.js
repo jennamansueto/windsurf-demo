@@ -1,4 +1,5 @@
 // UI Controls
+import { gameState } from './gameState.js';
 
 function loadDarkMode() {
     const isDarkMode = localStorage.getItem('darkMode') === 'true';
@@ -10,13 +11,27 @@ function saveDarkMode(isDarkMode) {
     localStorage.setItem('darkMode', isDarkMode);
 }
 
+function loadNightMode() {
+    const isNightMode = localStorage.getItem('nightMode') === 'true';
+    gameState.nightMode = isNightMode;
+    document.getElementById('night-mode-toggle').checked = isNightMode;
+}
+
+function saveNightMode(isNightMode) {
+    localStorage.setItem('nightMode', isNightMode);
+}
+
 export function initUI() {
     const settingsIcon = document.getElementById('settings-icon');
     const settingsPanel = document.getElementById('settings-panel');
     const darkModeToggle = document.getElementById('dark-mode-toggle');
+    const nightModeToggle = document.getElementById('night-mode-toggle');
 
     // Load dark mode preference
     loadDarkMode();
+
+    // Load night mode preference
+    loadNightMode();
 
     // Toggle settings panel
     settingsIcon.addEventListener('click', (e) => {
@@ -41,5 +56,12 @@ export function initUI() {
         const isDarkMode = e.target.checked;
         document.documentElement.setAttribute('data-theme', isDarkMode ? 'dark' : '');
         saveDarkMode(isDarkMode);
+    });
+
+    // Handle night mode toggle
+    nightModeToggle.addEventListener('change', (e) => {
+        const isNightMode = e.target.checked;
+        gameState.nightMode = isNightMode;
+        saveNightMode(isNightMode);
     });
 }
