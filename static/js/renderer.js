@@ -1,6 +1,6 @@
 import { gameState } from './gameState.js';
 import { getSize, calculateCenterOfMass } from './utils.js';
-import { WORLD_SIZE, COLORS, FOOD_SIZE } from './config.js';
+import { WORLD_SIZE, COLORS, FOOD_SIZE, NIGHT_MODE_RADIUS } from './config.js';
 
 let canvas, ctx, minimapCanvas, minimapCtx, scoreElement, leaderboardContent;
 
@@ -105,8 +105,57 @@ export function drawGame() {
         }
     });
 
+    // Draw night mode overlay
+    if (gameState.nightMode) {
+        drawNightOverlay();
+    }
+
     // Update score display
     scoreElement.textContent = `Score: ${Math.floor(gameState.playerCells.reduce((sum, cell) => sum + cell.score, 0))}`;
+}
+
+function drawNightOverlay() {
+    ctx.save();
+
+    // Find the largest player cell size for radius scaling
+    const largestScore = Math.max(...gameState.playerCells.map(cell => cell.score));
+    const largestSize = getSize(largestScore);
+    // Scale radius slightly with cell size so larger players see more
+    const scaledRadius = NIGHT_MODE_RADIUS + largestSize * 0.5;
+
+    // Create an offscreen canvas for the overlay
+    const overlayCanvas = document.createElement('canvas');
+    overlayCanvas.width = canvas.width;
+    overlayCanvas.height = canvas.height;
+    const overlayCtx = overlayCanvas.getContext('2d');
+
+    // Fill overlay with dark color
+    overlayCtx.fillStyle = 'rgba(0, 0, 0, 0.92)';
+    overlayCtx.fillRect(0, 0, overlayCanvas.width, overlayCanvas.height);
+
+    // Punch out circular holes for each player cell
+    overlayCtx.globalCompositeOperation = 'destination-out';
+    gameState.playerCells.forEach(cell => {
+        const screenX = cell.x - gameState.camera.x;
+        const screenY = cell.y - gameState.camera.y;
+
+        // Radial gradient for soft edge
+        const gradient = overlayCtx.createRadialGradient(
+            screenX, screenY, scaledRadius * 0.5,
+            screenX, screenY, scaledRadius
+        );
+        gradient.addColorStop(0, 'rgba(0, 0, 0, 1)');
+        gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+
+        overlayCtx.beginPath();
+        overlayCtx.arc(screenX, screenY, scaledRadius, 0, Math.PI * 2);
+        overlayCtx.fillStyle = gradient;
+        overlayCtx.fill();
+    });
+
+    // Draw the overlay onto the main canvas
+    ctx.drawImage(overlayCanvas, 0, 0);
+    ctx.restore();
 }
 
 export function drawMinimap() {
