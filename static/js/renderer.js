@@ -1,6 +1,6 @@
 import { gameState } from './gameState.js';
 import { getSize, calculateCenterOfMass } from './utils.js';
-import { WORLD_SIZE, COLORS, FOOD_SIZE } from './config.js';
+import { WORLD_SIZE, COLORS, FOOD_SIZE, NIGHT_MODE_RADIUS } from './config.js';
 
 let canvas, ctx, minimapCanvas, minimapCtx, scoreElement, leaderboardContent;
 
@@ -104,6 +104,39 @@ export function drawGame() {
             drawCellWithName(screenX, screenY, cell.score, COLORS.PLAYER, gameState.playerName);
         }
     });
+
+    // Night mode overlay
+    if (gameState.nightMode) {
+        const center = calculateCenterOfMass(gameState.playerCells);
+        const playerScreenX = center.x - gameState.camera.x;
+        const playerScreenY = center.y - gameState.camera.y;
+
+        const totalScore = gameState.playerCells.reduce((sum, c) => sum + c.score, 0);
+        const dynamicRadius = NIGHT_MODE_RADIUS + Math.sqrt(totalScore) * 2;
+
+        ctx.save();
+        ctx.beginPath();
+        // Outer rectangle covers entire canvas
+        ctx.rect(0, 0, canvas.width, canvas.height);
+        // Inner circle cut out around player (counterclockwise for even-odd)
+        ctx.arc(playerScreenX, playerScreenY, dynamicRadius, 0, Math.PI * 2, true);
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.93)';
+        ctx.fill('evenodd');
+
+        // Soft gradient edge for smoother falloff
+        const gradient = ctx.createRadialGradient(
+            playerScreenX, playerScreenY, dynamicRadius * 0.85,
+            playerScreenX, playerScreenY, dynamicRadius
+        );
+        gradient.addColorStop(0, 'rgba(0, 0, 0, 0)');
+        gradient.addColorStop(1, 'rgba(0, 0, 0, 0.93)');
+        ctx.beginPath();
+        ctx.arc(playerScreenX, playerScreenY, dynamicRadius, 0, Math.PI * 2);
+        ctx.fillStyle = gradient;
+        ctx.fill();
+
+        ctx.restore();
+    }
 
     // Update score display
     scoreElement.textContent = `Score: ${Math.floor(gameState.playerCells.reduce((sum, cell) => sum + cell.score, 0))}`;

@@ -13,6 +13,7 @@ export const gameState = {
         x: 0,
         y: 0
     },
+    nightMode: false,
     food: [],
     aiPlayers: []
 };
