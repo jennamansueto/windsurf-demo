@@ -1,6 +1,6 @@
 import { gameState } from './gameState.js';
 import { getSize, calculateCenterOfMass } from './utils.js';
-import { WORLD_SIZE, COLORS, FOOD_SIZE } from './config.js';
+import { WORLD_SIZE, COLORS, FOOD_SIZE, NIGHT_MODE_RADIUS } from './config.js';
 
 let canvas, ctx, minimapCanvas, minimapCtx, scoreElement, leaderboardContent;
 
@@ -105,8 +105,29 @@ export function drawGame() {
         }
     });
 
+    // Draw night mode overlay
+    drawNightOverlay();
+
     // Update score display
     scoreElement.textContent = `Score: ${Math.floor(gameState.playerCells.reduce((sum, cell) => sum + cell.score, 0))}`;
+}
+
+function drawNightOverlay() {
+    if (!gameState.nightMode) return;
+
+    const centerOfMass = calculateCenterOfMass(gameState.playerCells);
+    const screenX = centerOfMass.x - gameState.camera.x;
+    const screenY = centerOfMass.y - gameState.camera.y;
+
+    const totalPlayerScore = gameState.playerCells.reduce((sum, cell) => sum + cell.score, 0);
+    const radius = NIGHT_MODE_RADIUS + getSize(totalPlayerScore) * 0.5;
+
+    const gradient = ctx.createRadialGradient(screenX, screenY, 0, screenX, screenY, radius);
+    gradient.addColorStop(0, 'rgba(0, 0, 0, 0)');
+    gradient.addColorStop(1, 'rgba(0, 0, 0, 0.95)');
+
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
 }
 
 export function drawMinimap() {
