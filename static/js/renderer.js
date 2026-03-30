@@ -1,6 +1,6 @@
 import { gameState } from './gameState.js';
 import { getSize, calculateCenterOfMass } from './utils.js';
-import { WORLD_SIZE, COLORS, FOOD_SIZE } from './config.js';
+import { WORLD_SIZE, COLORS, FOOD_SIZE, FEATURE_FLAGS, NIGHT_MODE_RADIUS, NIGHT_MODE_SCALE_FACTOR } from './config.js';
 
 let canvas, ctx, minimapCanvas, minimapCtx, scoreElement, leaderboardContent;
 
@@ -105,6 +105,24 @@ export function drawGame() {
         }
     });
 
+    // Night mode overlay
+    if (gameState.nightMode && FEATURE_FLAGS.NIGHT_MODE) {
+        const totalScore = gameState.playerCells.reduce((sum, c) => sum + c.score, 0);
+        const visibilityRadius = NIGHT_MODE_RADIUS + getSize(totalScore) * NIGHT_MODE_SCALE_FACTOR;
+        const centerOfMass = calculateCenterOfMass(gameState.playerCells);
+        const screenCenterX = centerOfMass.x - gameState.camera.x;
+        const screenCenterY = centerOfMass.y - gameState.camera.y;
+        const gradient = ctx.createRadialGradient(
+            screenCenterX, screenCenterY, visibilityRadius * 0.6,
+            screenCenterX, screenCenterY, visibilityRadius
+        );
+        gradient.addColorStop(0, 'rgba(0, 0, 0, 0)');
+        gradient.addColorStop(0.7, 'rgba(0, 0, 0, 0)');
+        gradient.addColorStop(1, 'rgba(0, 0, 0, 0.95)');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+
     // Update score display
     scoreElement.textContent = `Score: ${Math.floor(gameState.playerCells.reduce((sum, cell) => sum + cell.score, 0))}`;
 }
@@ -125,19 +143,21 @@ export function drawMinimap() {
     minimapCtx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
     minimapCtx.strokeRect(viewX, viewY, viewWidth, viewHeight);
 
-    // Draw AI players on minimap
-    gameState.aiPlayers.forEach(ai => {
-        minimapCtx.beginPath();
-        minimapCtx.arc(
-            ai.x * scale,
-            ai.y * scale,
-            2,
-            0,
-            Math.PI * 2
-        );
-        minimapCtx.fillStyle = COLORS.MINIMAP.OTHER;
-        minimapCtx.fill();
-    });
+    // Draw AI players on minimap (hidden in night mode)
+    if (!(gameState.nightMode && FEATURE_FLAGS.NIGHT_MODE)) {
+        gameState.aiPlayers.forEach(ai => {
+            minimapCtx.beginPath();
+            minimapCtx.arc(
+                ai.x * scale,
+                ai.y * scale,
+                2,
+                0,
+                Math.PI * 2
+            );
+            minimapCtx.fillStyle = COLORS.MINIMAP.OTHER;
+            minimapCtx.fill();
+        });
+    }
 
     // Draw player cells on minimap
     gameState.playerCells.forEach(cell => {
