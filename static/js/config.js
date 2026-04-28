@@ -19,6 +19,18 @@ export const MERGE_COOLDOWN = 10000;  // Time in ms before cells can merge
 export const MERGE_FORCE = 0.3;       // Strength of the merging force
 export const MERGE_START_FORCE = 0.1; // Initial attraction force (before merge cooldown)
 
+// Feature flags
+export const FEATURES = {
+    NIGHT_MODE: true
+};
+
+// Night mode settings
+export const NIGHT_MODE = {
+    VISION_RADIUS: 200,   // Base vision radius in pixels (scales with player size)
+    FALLOFF: 0.6,         // Fraction of radius where falloff begins (0-1)
+    DARKNESS: 0.95        // Opacity of the darkness overlay (0-1)
+};
+
 export const COLORS = {
     PLAYER: '#008080',  // Teal color
     MINIMAP: {

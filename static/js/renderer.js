@@ -1,6 +1,6 @@
 import { gameState } from './gameState.js';
 import { getSize, calculateCenterOfMass } from './utils.js';
-import { WORLD_SIZE, COLORS, FOOD_SIZE } from './config.js';
+import { WORLD_SIZE, COLORS, FOOD_SIZE, FEATURES, NIGHT_MODE } from './config.js';
 
 let canvas, ctx, minimapCanvas, minimapCtx, scoreElement, leaderboardContent;
 
@@ -60,6 +60,29 @@ function drawCellWithName(x, y, score, color, name) {
     }
 }
 
+function drawNightOverlay() {
+    const centerOfMass = calculateCenterOfMass(gameState.playerCells);
+    const screenX = centerOfMass.x - gameState.camera.x;
+    const screenY = centerOfMass.y - gameState.camera.y;
+
+    // Scale vision radius with the player's total size
+    const totalScore = gameState.playerCells.reduce((sum, cell) => sum + cell.score, 0);
+    const playerSize = getSize(totalScore);
+    const visionRadius = NIGHT_MODE.VISION_RADIUS + playerSize;
+
+    const innerRadius = visionRadius * NIGHT_MODE.FALLOFF;
+
+    const gradient = ctx.createRadialGradient(
+        screenX, screenY, innerRadius,
+        screenX, screenY, visionRadius
+    );
+    gradient.addColorStop(0, `rgba(0, 0, 0, 0)`);
+    gradient.addColorStop(1, `rgba(0, 0, 0, ${NIGHT_MODE.DARKNESS})`);
+
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+}
+
 export function drawGame() {
     if (!ctx) return;
 
@@ -104,6 +127,11 @@ export function drawGame() {
             drawCellWithName(screenX, screenY, cell.score, COLORS.PLAYER, gameState.playerName);
         }
     });
+
+    // Draw night mode overlay
+    if (FEATURES.NIGHT_MODE && gameState.nightModeEnabled) {
+        drawNightOverlay();
+    }
 
     // Update score display
     scoreElement.textContent = `Score: ${Math.floor(gameState.playerCells.reduce((sum, cell) => sum + cell.score, 0))}`;
