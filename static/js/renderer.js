@@ -81,15 +81,6 @@ function drawNightOverlay() {
 
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    // Fill corners/edges beyond the gradient with full darkness
-    ctx.save();
-    ctx.beginPath();
-    ctx.rect(0, 0, canvas.width, canvas.height);
-    ctx.arc(screenX, screenY, visionRadius, 0, Math.PI * 2, true);
-    ctx.fillStyle = `rgba(0, 0, 0, ${NIGHT_MODE.DARKNESS})`;
-    ctx.fill();
-    ctx.restore();
 }
 
 export function drawGame() {
