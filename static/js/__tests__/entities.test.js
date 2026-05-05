@@ -131,6 +131,11 @@ describe('respawnAI', () => {
 describe('updateAI', () => {
   beforeEach(() => {
     gameState.aiPlayers = [];
+    jest.spyOn(Math, 'random').mockReturnValue(0.5);
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
   });
 
   test('moves AI players based on their direction', () => {
