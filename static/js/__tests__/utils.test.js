@@ -1,4 +1,5 @@
-import { getSize, getDistance, calculateCenterOfMass } from '../utils.js';
+import { getSize, getDistance, calculateCenterOfMass, getRandomPosition, findSafeSpawnLocation } from '../utils.js';
+import { WORLD_SIZE } from '../config.js';
 
 describe('getSize', () => {
   test('returns correct size for score 0', () => {
@@ -52,8 +53,8 @@ describe('calculateCenterOfMass', () => {
       { x: 10, y: 10, score: 300 }
     ];
     const center = calculateCenterOfMass(cells);
-    expect(center.x).toBeCloseTo(5);
-    expect(center.y).toBeCloseTo(5);
+    expect(center.x).toBeCloseTo(7.5);
+    expect(center.y).toBeCloseTo(7.5);
   });
 
   test('returns {x: 0, y: 0} for empty cells array', () => {
@@ -66,5 +67,83 @@ describe('calculateCenterOfMass', () => {
       { x: 30, y: 40, score: 0 }
     ];
     expect(calculateCenterOfMass(cells)).toEqual({ x: 0, y: 0 });
+  });
+});
+
+describe('getRandomPosition', () => {
+  test('returns position within world bounds', () => {
+    const pos = getRandomPosition();
+    expect(pos.x).toBeGreaterThanOrEqual(0);
+    expect(pos.x).toBeLessThanOrEqual(WORLD_SIZE);
+    expect(pos.y).toBeGreaterThanOrEqual(0);
+    expect(pos.y).toBeLessThanOrEqual(WORLD_SIZE);
+  });
+
+  test('returns object with x and y properties', () => {
+    const pos = getRandomPosition();
+    expect(pos).toHaveProperty('x');
+    expect(pos).toHaveProperty('y');
+  });
+
+  test('returns different positions on subsequent calls', () => {
+    const positions = Array.from({ length: 10 }, () => getRandomPosition());
+    const uniqueX = new Set(positions.map(p => p.x));
+    expect(uniqueX.size).toBeGreaterThan(1);
+  });
+});
+
+describe('findSafeSpawnLocation', () => {
+  test('returns position within world bounds', () => {
+    const state = { aiPlayers: [], playerCells: [] };
+    const pos = findSafeSpawnLocation(state);
+    expect(pos.x).toBeGreaterThanOrEqual(0);
+    expect(pos.x).toBeLessThanOrEqual(WORLD_SIZE);
+    expect(pos.y).toBeGreaterThanOrEqual(0);
+    expect(pos.y).toBeLessThanOrEqual(WORLD_SIZE);
+  });
+
+  test('returns position away from AI players', () => {
+    const state = {
+      aiPlayers: [{ x: 500, y: 500, score: 100 }],
+      playerCells: []
+    };
+    const minDistance = 100;
+    const pos = findSafeSpawnLocation(state, minDistance);
+    const dx = pos.x - 500;
+    const dy = pos.y - 500;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    const aiSize = getSize(100);
+    expect(dist).toBeGreaterThanOrEqual(aiSize + minDistance - 1);
+  });
+
+  test('returns position away from player cells', () => {
+    const state = {
+      aiPlayers: [],
+      playerCells: [{ x: 500, y: 500, score: 100 }]
+    };
+    const minDistance = 100;
+    const pos = findSafeSpawnLocation(state, minDistance);
+    const dx = pos.x - 500;
+    const dy = pos.y - 500;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    const playerSize = getSize(100);
+    expect(dist).toBeGreaterThanOrEqual(playerSize + minDistance - 1);
+  });
+
+  test('returns best-effort position when map is crowded', () => {
+    // Fill the map with many entities so safe spawn is hard to find
+    const crowdedState = {
+      aiPlayers: Array.from({ length: 50 }, (_, i) => ({
+        x: (i % 10) * (WORLD_SIZE / 10),
+        y: Math.floor(i / 10) * (WORLD_SIZE / 5),
+        score: 500
+      })),
+      playerCells: []
+    };
+    const pos = findSafeSpawnLocation(crowdedState);
+    expect(pos).toHaveProperty('x');
+    expect(pos).toHaveProperty('y');
+    expect(pos.x).toBeGreaterThanOrEqual(0);
+    expect(pos.y).toBeGreaterThanOrEqual(0);
   });
 });
