@@ -1,12 +1,13 @@
-import { splitPlayerCell, handlePlayerSplit, updatePlayer, respawnAI } from '../entities.js';
+import { splitPlayerCell, handlePlayerSplit, updatePlayer, updateAI, initEntities, respawnAI } from '../entities.js';
 import { gameState, mouse } from '../gameState.js';
-import { MIN_SPLIT_SCORE, MAX_PLAYER_CELLS, AI_STARTING_SCORE } from '../config.js';
+import { MIN_SPLIT_SCORE, MAX_PLAYER_CELLS, AI_STARTING_SCORE, FOOD_COUNT, AI_COUNT, WORLD_SIZE } from '../config.js';
 
 // Mock gameState and mouse
 jest.mock('../gameState.js', () => ({
   gameState: {
     playerCells: [],
-    aiPlayers: []
+    aiPlayers: [],
+    food: []
   },
   mouse: { x: 0, y: 0 }
 }));
@@ -124,5 +125,139 @@ describe('respawnAI', () => {
     expect(ai).toHaveProperty('color');
     expect(ai).toHaveProperty('direction');
     expect(ai).toHaveProperty('name');
+  });
+});
+
+describe('updateAI', () => {
+  beforeEach(() => {
+    gameState.aiPlayers = [];
+    jest.spyOn(Math, 'random').mockReturnValue(0.5);
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  test('moves AI players based on their direction', () => {
+    gameState.aiPlayers = [{
+      x: 500,
+      y: 500,
+      score: AI_STARTING_SCORE,
+      direction: 0,  // facing right
+      color: '#ff0000',
+      name: 'TestAI'
+    }];
+
+    updateAI();
+
+    expect(gameState.aiPlayers[0].x).toBeGreaterThan(500);
+    expect(gameState.aiPlayers[0].y).toBeCloseTo(500, 0);
+  });
+
+  test('clamps AI position to world bounds', () => {
+    gameState.aiPlayers = [{
+      x: WORLD_SIZE,
+      y: WORLD_SIZE,
+      score: AI_STARTING_SCORE,
+      direction: 0,  // facing right (would go beyond WORLD_SIZE)
+      color: '#ff0000',
+      name: 'TestAI'
+    }];
+
+    updateAI();
+
+    expect(gameState.aiPlayers[0].x).toBeLessThanOrEqual(WORLD_SIZE);
+    expect(gameState.aiPlayers[0].y).toBeLessThanOrEqual(WORLD_SIZE);
+  });
+
+  test('clamps AI position to zero minimum', () => {
+    gameState.aiPlayers = [{
+      x: 0,
+      y: 0,
+      score: AI_STARTING_SCORE,
+      direction: Math.PI,  // facing left (would go below 0)
+      color: '#ff0000',
+      name: 'TestAI'
+    }];
+
+    updateAI();
+
+    expect(gameState.aiPlayers[0].x).toBeGreaterThanOrEqual(0);
+    expect(gameState.aiPlayers[0].y).toBeGreaterThanOrEqual(0);
+  });
+
+  test('larger AI moves slower than smaller AI', () => {
+    const smallAI = {
+      x: 500, y: 500, score: 50, direction: 0, color: '#ff0000', name: 'Small'
+    };
+    const largeAI = {
+      x: 500, y: 500, score: 400, direction: 0, color: '#0000ff', name: 'Large'
+    };
+
+    gameState.aiPlayers = [smallAI];
+    updateAI();
+    const smallDistance = gameState.aiPlayers[0].x - 500;
+
+    gameState.aiPlayers = [largeAI];
+    updateAI();
+    const largeDistance = gameState.aiPlayers[0].x - 500;
+
+    expect(smallDistance).toBeGreaterThan(largeDistance);
+  });
+});
+
+describe('initEntities', () => {
+  beforeEach(() => {
+    gameState.food = [];
+    gameState.aiPlayers = [];
+  });
+
+  test('initializes correct number of food items', () => {
+    initEntities();
+
+    expect(gameState.food.length).toBe(FOOD_COUNT);
+  });
+
+  test('initializes correct number of AI players', () => {
+    initEntities();
+
+    expect(gameState.aiPlayers.length).toBe(AI_COUNT);
+  });
+
+  test('food items have position and color', () => {
+    initEntities();
+
+    gameState.food.forEach(food => {
+      expect(food).toHaveProperty('x');
+      expect(food).toHaveProperty('y');
+      expect(food).toHaveProperty('color');
+      expect(food.x).toBeGreaterThanOrEqual(0);
+      expect(food.x).toBeLessThanOrEqual(WORLD_SIZE);
+      expect(food.y).toBeGreaterThanOrEqual(0);
+      expect(food.y).toBeLessThanOrEqual(WORLD_SIZE);
+    });
+  });
+
+  test('AI players have required properties', () => {
+    initEntities();
+
+    gameState.aiPlayers.forEach(ai => {
+      expect(ai).toHaveProperty('x');
+      expect(ai).toHaveProperty('y');
+      expect(ai.score).toBe(AI_STARTING_SCORE);
+      expect(ai).toHaveProperty('color');
+      expect(ai).toHaveProperty('direction');
+      expect(ai).toHaveProperty('name');
+    });
+  });
+
+  test('clears existing entities before initialization', () => {
+    gameState.food = [{ x: 1, y: 1, color: 'red' }];
+    gameState.aiPlayers = [{ x: 1, y: 1, score: 100, color: 'blue', direction: 0, name: 'Old' }];
+
+    initEntities();
+
+    expect(gameState.food.length).toBe(FOOD_COUNT);
+    expect(gameState.aiPlayers.length).toBe(AI_COUNT);
   });
 });
