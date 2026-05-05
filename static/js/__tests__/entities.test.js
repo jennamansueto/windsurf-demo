@@ -130,8 +130,17 @@ describe('respawnAI', () => {
 });
 
 describe('updateAI', () => {
+  let randomSpy;
+
   beforeEach(() => {
     gameState.aiPlayers = [];
+    // Mock Math.random to return 0.5 (always >= 0.02) so the 2% random
+    // direction change in updateAI never triggers during tests.
+    randomSpy = jest.spyOn(Math, 'random').mockReturnValue(0.5);
+  });
+
+  afterEach(() => {
+    randomSpy.mockRestore();
   });
 
   test('moves AI players based on their direction', () => {
