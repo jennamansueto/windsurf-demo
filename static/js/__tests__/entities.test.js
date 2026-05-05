@@ -1,12 +1,14 @@
-import { splitPlayerCell, handlePlayerSplit, updatePlayer, respawnAI } from '../entities.js';
+import { splitPlayerCell, handlePlayerSplit, updatePlayer, updateAI, initEntities, respawnAI } from '../entities.js';
 import { gameState, mouse } from '../gameState.js';
-import { MIN_SPLIT_SCORE, MAX_PLAYER_CELLS, AI_STARTING_SCORE } from '../config.js';
+import { MIN_SPLIT_SCORE, MAX_PLAYER_CELLS, AI_STARTING_SCORE, WORLD_SIZE, FOOD_COUNT, AI_COUNT, MERGE_COOLDOWN } from '../config.js';
 
 // Mock gameState and mouse
 jest.mock('../gameState.js', () => ({
   gameState: {
     playerCells: [],
-    aiPlayers: []
+    aiPlayers: [],
+    food: [],
+    playerName: 'Windsurf'
   },
   mouse: { x: 0, y: 0 }
 }));
@@ -124,5 +126,178 @@ describe('respawnAI', () => {
     expect(ai).toHaveProperty('color');
     expect(ai).toHaveProperty('direction');
     expect(ai).toHaveProperty('name');
+  });
+});
+
+describe('updateAI', () => {
+  let randomSpy;
+
+  beforeEach(() => {
+    gameState.aiPlayers = [];
+    // Mock Math.random to return 0.5 (always >= 0.02) so the 2% random
+    // direction change in updateAI never triggers during tests.
+    randomSpy = jest.spyOn(Math, 'random').mockReturnValue(0.5);
+  });
+
+  afterEach(() => {
+    randomSpy.mockRestore();
+  });
+
+  test('moves AI players based on their direction', () => {
+    gameState.aiPlayers = [{
+      x: 500, y: 500, score: 50, direction: 0, name: 'TestAI'
+    }];
+
+    const origX = gameState.aiPlayers[0].x;
+    updateAI();
+
+    // direction=0 means moving right (cos(0)=1)
+    expect(gameState.aiPlayers[0].x).toBeGreaterThan(origX);
+  });
+
+  test('clamps AI position within world bounds', () => {
+    gameState.aiPlayers = [{
+      x: WORLD_SIZE, y: WORLD_SIZE, score: 50, direction: 0, name: 'TestAI'
+    }];
+
+    updateAI();
+
+    expect(gameState.aiPlayers[0].x).toBeLessThanOrEqual(WORLD_SIZE);
+    expect(gameState.aiPlayers[0].y).toBeLessThanOrEqual(WORLD_SIZE);
+  });
+
+  test('clamps AI position at lower bound', () => {
+    // direction = Math.PI means moving left (cos(PI) = -1)
+    gameState.aiPlayers = [{
+      x: 0, y: 0, score: 50, direction: Math.PI, name: 'TestAI'
+    }];
+
+    updateAI();
+
+    expect(gameState.aiPlayers[0].x).toBeGreaterThanOrEqual(0);
+    expect(gameState.aiPlayers[0].y).toBeGreaterThanOrEqual(0);
+  });
+
+  test('larger AI moves slower than smaller AI', () => {
+    gameState.aiPlayers = [{
+      x: 500, y: 500, score: 50, direction: 0, name: 'SmallAI'
+    }];
+    updateAI();
+    const smallDelta = gameState.aiPlayers[0].x - 500;
+
+    gameState.aiPlayers = [{
+      x: 500, y: 500, score: 500, direction: 0, name: 'LargeAI'
+    }];
+    updateAI();
+    const largeDelta = gameState.aiPlayers[0].x - 500;
+
+    expect(Math.abs(smallDelta)).toBeGreaterThan(Math.abs(largeDelta));
+  });
+});
+
+describe('initEntities', () => {
+  beforeEach(() => {
+    gameState.food = [];
+    gameState.aiPlayers = [];
+  });
+
+  test('creates the correct number of food items', () => {
+    initEntities();
+    expect(gameState.food.length).toBe(FOOD_COUNT);
+  });
+
+  test('creates the correct number of AI players', () => {
+    initEntities();
+    expect(gameState.aiPlayers.length).toBe(AI_COUNT);
+  });
+
+  test('food items have x, y, and color properties', () => {
+    initEntities();
+    gameState.food.forEach(food => {
+      expect(food).toHaveProperty('x');
+      expect(food).toHaveProperty('y');
+      expect(food).toHaveProperty('color');
+    });
+  });
+
+  test('AI players have required properties', () => {
+    initEntities();
+    gameState.aiPlayers.forEach(ai => {
+      expect(ai).toHaveProperty('x');
+      expect(ai).toHaveProperty('y');
+      expect(ai.score).toBe(AI_STARTING_SCORE);
+      expect(ai).toHaveProperty('color');
+      expect(ai).toHaveProperty('direction');
+      expect(ai).toHaveProperty('name');
+    });
+  });
+
+  test('AI players have unique names', () => {
+    initEntities();
+    const names = gameState.aiPlayers.map(ai => ai.name);
+    const uniqueNames = new Set(names);
+    expect(uniqueNames.size).toBe(names.length);
+  });
+
+  test('clears existing entities before initializing', () => {
+    gameState.food = [{ x: 0, y: 0, color: 'red' }];
+    gameState.aiPlayers = [{ x: 0, y: 0, score: 100, name: 'Old' }];
+
+    initEntities();
+
+    expect(gameState.food.length).toBe(FOOD_COUNT);
+    expect(gameState.aiPlayers.length).toBe(AI_COUNT);
+  });
+});
+
+describe('updateCellMerging (via updatePlayer)', () => {
+  beforeEach(() => {
+    gameState.playerCells = [];
+    mouse.x = window.innerWidth / 2;
+    mouse.y = window.innerHeight / 2;
+  });
+
+  test('does not merge cells within cooldown period', () => {
+    const now = Date.now();
+    gameState.playerCells = [
+      { x: 100, y: 100, score: 50, velocityX: 0, velocityY: 0, splitTime: now },
+      { x: 101, y: 100, score: 50, velocityX: 0, velocityY: 0, splitTime: now }
+    ];
+
+    updatePlayer();
+
+    expect(gameState.playerCells.length).toBe(2);
+  });
+
+  test('merges cells after cooldown when close together', () => {
+    const oldTime = Date.now() - MERGE_COOLDOWN - 1000;
+    gameState.playerCells = [
+      { x: 100, y: 100, score: 50, velocityX: 0, velocityY: 0, splitTime: oldTime },
+      { x: 100, y: 100, score: 50, velocityX: 0, velocityY: 0, splitTime: oldTime }
+    ];
+
+    // Run several updates to let cells merge
+    for (let i = 0; i < 10; i++) {
+      updatePlayer();
+    }
+
+    expect(gameState.playerCells.length).toBe(1);
+    expect(gameState.playerCells[0].score).toBe(100);
+  });
+
+  test('applies repulsion when cells are too close but in cooldown', () => {
+    const now = Date.now();
+    gameState.playerCells = [
+      { x: 100, y: 100, score: 100, velocityX: 0, velocityY: 0, splitTime: now },
+      { x: 101, y: 100, score: 100, velocityX: 0, velocityY: 0, splitTime: now }
+    ];
+
+    updatePlayer();
+
+    // Cells should have been pushed apart (repulsion)
+    const cell1Vx = gameState.playerCells[0].velocityX;
+    const cell2Vx = gameState.playerCells[1].velocityX;
+    // They should have opposite velocity components from repulsion
+    expect(cell1Vx * cell2Vx).toBeLessThanOrEqual(0);
   });
 });
