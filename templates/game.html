@@ -13,6 +13,11 @@
             --canvas-color: #2d2d2d;
         }
 
+        :root[data-theme="night"] {
+            --bg-color: #0a0e1a;
+            --canvas-color: #0d1117;
+        }
+
         body {
             margin: 0;
             overflow: hidden;
@@ -35,6 +40,10 @@
         :root[data-theme="dark"] #score {
             color: #fff;
             text-shadow: 0 0 3px rgba(0, 0, 0, 0.5);
+        }
+        :root[data-theme="night"] #score {
+            color: #c8d6e5;
+            text-shadow: 0 0 8px rgba(100, 149, 237, 0.5);
         }
         #leaderboard {
             position: absolute;
@@ -202,6 +211,9 @@
         input:checked + .toggle-slider:before {
             transform: translateX(20px);
         }
+        input:checked + .toggle-slider.night-slider {
+            background-color: #6366f1;
+        }
     </style>
 </head>
 <body>
@@ -240,6 +252,13 @@
                 <label class="toggle-switch">
                     <input type="checkbox" id="dark-mode-toggle" onclick="toggleDarkMode()">
                     <span class="toggle-slider"></span>
+                </label>
+            </div>
+            <div class="control-item">
+                <span>Night Mode</span>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="night-mode-toggle">
+                    <span class="toggle-slider night-slider"></span>
                 </label>
             </div>
         </div>

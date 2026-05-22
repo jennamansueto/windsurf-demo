@@ -1,6 +1,6 @@
 import { gameState } from './gameState.js';
 import { getSize, calculateCenterOfMass } from './utils.js';
-import { WORLD_SIZE, COLORS, FOOD_SIZE } from './config.js';
+import { WORLD_SIZE, COLORS, FOOD_SIZE, NIGHT_MODE } from './config.js';
 
 let canvas, ctx, minimapCanvas, minimapCtx, scoreElement, leaderboardContent;
 
@@ -23,26 +23,45 @@ export function resizeCanvas() {
 
 function drawCircle(x, y, value, color, isFood) {
     const size = isFood ? value : getSize(value);
+
+    if (gameState.nightMode) {
+        ctx.save();
+        ctx.shadowColor = color;
+        ctx.shadowBlur = NIGHT_MODE.GLOW_RADIUS;
+    }
+
     ctx.beginPath();
     ctx.arc(x, y, size, 0, Math.PI * 2);
     ctx.fillStyle = color;
     ctx.fill();
+
+    if (gameState.nightMode) {
+        ctx.restore();
+    }
 }
 
 function drawCellWithName(x, y, score, color, name) {
     const size = getSize(score);
-    
+
+    if (gameState.nightMode) {
+        ctx.save();
+        ctx.shadowColor = color;
+        ctx.shadowBlur = NIGHT_MODE.GLOW_RADIUS + size * 0.3;
+    }
+
     // Draw cell
     ctx.beginPath();
     ctx.arc(x, y, size, 0, Math.PI * 2);
     ctx.fillStyle = color;
     ctx.fill();
 
+    if (gameState.nightMode) {
+        ctx.restore();
+    }
+
     // Draw name
-    if (size > 20) {  // Only draw name if cell is big enough
+    if (size > 20) {
         ctx.save();
-        
-        // Calculate font size based on cell size
         const fontSize = Math.max(12, Math.min(20, size / 2));
         ctx.font = `bold ${fontSize}px Arial`;
         ctx.fillStyle = 'white';
@@ -50,14 +69,27 @@ function drawCellWithName(x, y, score, color, name) {
         ctx.lineWidth = 3;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        
-        // Draw text stroke (outline)
         ctx.strokeText(name, x, y);
-        // Draw text fill
         ctx.fillText(name, x, y);
-        
         ctx.restore();
     }
+}
+
+function drawStars() {
+    const time = Date.now() * 0.001;
+    gameState.stars.forEach(star => {
+        const screenX = star.x - gameState.camera.x;
+        const screenY = star.y - gameState.camera.y;
+
+        if (screenX < -5 || screenX > canvas.width + 5 ||
+            screenY < -5 || screenY > canvas.height + 5) return;
+
+        const alpha = 0.4 + 0.6 * Math.abs(Math.sin(time * star.twinkleSpeed * 60 + star.twinkleOffset));
+        ctx.beginPath();
+        ctx.arc(screenX, screenY, star.radius, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+        ctx.fill();
+    });
 }
 
 export function drawGame() {
@@ -69,6 +101,11 @@ export function drawGame() {
     const centerOfMass = calculateCenterOfMass(gameState.playerCells);
     gameState.camera.x = centerOfMass.x - canvas.width / 2;
     gameState.camera.y = centerOfMass.y - canvas.height / 2;
+
+    // Draw stars when night mode is active
+    if (gameState.nightMode) {
+        drawStars();
+    }
 
     // Draw food
     gameState.food.forEach(food => {

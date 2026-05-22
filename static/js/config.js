@@ -27,3 +27,10 @@ export const COLORS = {
         OTHER: 'rgba(255, 255, 255, 0.3)'
     }
 };
+
+// Night mode
+export const NIGHT_MODE = {
+    STAR_COUNT: 200,
+    GLOW_RADIUS: 15,
+    GLOW_ALPHA: 0.6,
+};
